@@ -95,8 +95,7 @@ bin\openocd -f scripts\bttskr\lpc17xx-stlink-v2.cfg -c "dump_image skr_fw_backup
 bin\openocd -f scripts\bttskr\lpc17xx-stlink-v2.cfg -c "dump_image skr_bootloader_backup.bin 0x0 0x4000" -c "reset run" -c "exit"
 
 ### Bootloader Write
-LDR=DFU-Bootloader.bin
-bin\openocd -f scripts\bttskr\lpc17xx-stlink-v2.cfg  -c "flash write_image erase $LDR 0x0" -c "reset run" -c "exit"
+bin\openocd -f scripts\bttskr\lpc17xx-stlink-v2.cfg  -c "flash write_image erase DFU-Bootloader.bin 0x0" -c "reset run" -c "exit"
 
 ## Configuration
 By default, the bootloader will show status/debug messages via the serial port @115200 baud. You can configure these as well as disableing USB, disabling the second SD card and so on in `config.h`.
