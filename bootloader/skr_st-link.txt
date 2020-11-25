@@ -1,0 +1,46 @@
+https://community.platformio.org/t/skr-1-4-bricked/12932/7
+https://github.com/ardiehl/BTT_SKR_13_14_14T_SD-DFU-Bootloader
+
+Тем не менее, STLinkv2 должен работать, но не с утилитой ST-Link, поскольку она должна распознавать только чипы STM32. Однако STLink является универсальным отладчиком SWD (я прошил им плату Realtek Ameba), так что у него не должно быть проблем.
+
+Не могли бы вы сделать следующее:
+
+перейти в папку C:\Users\<user>\.platformio\packages
+если папка tool-openocdнаходится не там, загрузите последнюю версию для вашей платформы здесь 31 годво вновь созданную папку с именем tool-openocd.
+откройте терминал (например cmd.exe) и cdв свой tool-openocdкаталог (например cd C:\Users\<user>\.platformio\packages\tool-openocd)
+попробуйте использовать openocd для подключения к целевому чипу LPC1768 с помощью команды
+bin\openocd.exe -f scripts\interface\stlink.cfg -c "reset_config none separate" -f scripts\target\lpc17xx.cfg
+
+В случае успеха вы должны увидеть, что он распознает чип и запускает сервер GDB.
+
+ bin\openocd.exe -f scripts\interface\stlink.cfg -c "reset_config none separate" -f scripts\target\lpc17xx.cfg
+xPack OpenOCD, 64-bit Open On-Chip Debugger 0.10.0+dev (2019-07-17-11:28)
+Licensed under GNU GPL v2
+For bug reports, read
+    http://openocd.org/doc/doxygen/bugs.html
+none separate
+
+Info : auto-selecting first available session transport "hla_swd". To override use 'transport select <transport>'.
+Info : The selected transport took over low-level target control. The results might differ compared to plain JTAG/SWD
+Info : Listening on port 6666 for tcl connections
+Info : Listening on port 4444 for telnet connections
+Info : clock speed 10 kHz
+Info : STLINK V2J29S7 (API v2) VID:PID 0483:3748
+Info : Target voltage: 3.170871
+Info : lpc17xx.cpu: hardware has 6 breakpoints, 4 watchpoints
+Info : Listening on port 3333 for gdb connections
+
+Итак, LPC1768 на вашем SKR жив и здоров.
+
+Вы можете дополнительно проверить это, если подключитесь к интерфейсу telnet (например, через ncat 2или telnet.exe) в командной строке (127.0.0.1 порт 4444) и попробуйте использовать команды, например, для чтения флэш-банков и сброса содержимого флэш-памяти в файл ( docs 7, reset halt, flash banks, flash info 0, flash read_bank 0 dump.bin, ...). Но это уже убедительно свидетельствует о том, что MCU жив и здоров.
+
+Но SKR 1.4, похоже, не отвечает через интерфейс SWD :смущенный:. Вы можете попробовать несколько вещей:
+
+убедитесь, что TRSTсигнал также подключен к STLink V2 (я думаю, что он NRSTтам)
+исключение -c "reset_config none separate"переключателя из вызова
+пробовать разные конфигурации сброса, как указано здесь 14
+это (not)RESETлиния постоянно низко? (удерживает MCU в состоянии сброса, по умолчанию должен быть высоким для «не в сбросе»)
+отключение всех внешних устройств от материнской платы, таких как двигатели, изголовья, ЖК-дисплеи и тому подобное. Измеренное напряжение 3.151845кажется немного низким для целевого значения 3,3 В, как если бы в системе была значительная нагрузка / потребляемая мощность.
+плата имеет внешнее питание? (Я думаю, что STLinkv2 сначала попытается измерить напряжение на своем выводе VCC_TARGET, и, если напряжение отсутствует, попытается подать питание - этого может быть недостаточно для всей целевой материнской платы; следует использовать источник питания USB + перемычку J15 для Возможно, ВУСБ.)
+с помощью мультиметра стабильна ли шина 3.3В платы и особенно на микроконтроллере? (например, измеряется через конденсатор C14 на схеме)
+какой-нибудь чип нагревается? есть ли на печатной плате следы прожога?
